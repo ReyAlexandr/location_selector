@@ -21,7 +21,13 @@ class LocationSelectorWidget extends StatefulWidget {
   onResolveSuggestion;
   final Future<ResolvedLocation> Function(double latitude, double longitude)
   onResolveGps;
-  final void Function(ResolvedLocation location) onLocationSelected;
+
+  /// Called after a suggestion or GPS location has been resolved.
+  ///
+  /// The selector stays in its resolving state until the returned future
+  /// completes, allowing consumers to perform asynchronous work such as
+  /// validation, persistence, or navigation without re-enabling the UI early.
+  final FutureOr<void> Function(ResolvedLocation location) onLocationSelected;
   final Future<({double latitude, double longitude})?> Function()?
   onGetCurrentLocation;
   final void Function(String errorMessage)? onError;
@@ -118,7 +124,7 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget> {
 
     try {
       final resolved = await widget.onResolveSuggestion(suggestion);
-      widget.onLocationSelected(resolved);
+      await widget.onLocationSelected(resolved);
     } catch (error) {
       if (!mounted) return;
       if (widget.onError != null) {
@@ -148,7 +154,7 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget> {
 
     try {
       final resolved = await widget.onResolveGps(lat, lng);
-      widget.onLocationSelected(resolved);
+      await widget.onLocationSelected(resolved);
       return resolved;
     } catch (error) {
       rethrow;
